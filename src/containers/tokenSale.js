@@ -7,8 +7,19 @@ import {checkAddress, sendTokens} from '../actions/index';
 import CarriedInterestContract from '../../build/contracts/CarriedInterest.json';
 import StandardTokenContract from '../../build/contracts/StandardToken.json';
 
-import getWeb3 from '../utils/getWeb3'
+import Web3 from 'web3'
+const provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const contract = require('truffle-contract')
+const carriedInterest = contract(CarriedInterestContract);
+const standardToken = contract(StandardTokenContract);
+carriedInterest.setProvider(provider);
+standardToken.setProvider(provider);
 //import Web3 from 'web3';
+
+// Get Web3 so we can get our accounts.
+const web3RPC = new Web3(provider)
+var carriedInterestInstance
+var standardTokenInstance
 
 const backgroundStyle = {
   zIndex: 4,
@@ -59,111 +70,33 @@ class tokenSale extends Component {
     self.state = {
       value:'',
       web3: null,
-    }
+    };
     self.handleChange = self.handleChange.bind(self);//Why?
-    self.balanceInstance = null;
+    self.carriedInterest = null;
+    self.standardTokenInstance = null;
   }
   componentWillMount(){
     const self = this;
 
-    getWeb3
-    .then(results => {
-      this.setState({
-        web3: results.web3
-      })
-
-      // Instantiate contract once web3 provided.
-      this.instantiateContract()
-    })
-    .catch(() => {
-      console.log('Error finding web3.')
-    })
-
-//     web3RPC.eth.getAccounts(function(error, accounts){
-//       console.log(accounts);
-//
-//       carriedInterest.deployed()
-//       .then(function(instance){
-//         self.carriedInterestInstance = instance;
-//         console.log('truffle', self.carriedInterestInstance);
-//       })
-//       .catch(console.log);
-//
-//       standardToken.deployed()
-//       .then(function(instance){
-//         self.standardTokenInstance = instance;
-//         console.log('truffle', self.standardTokenInstance);
-//       })
-//       .catch(console.log);
-//     })
-  }
-
-  //Get the RPC provider
-// const provider = new Web3.providers.HttpProvider('http://localhost:8545');//Connect directly to INFURA
-
-
-  instantiateContract() {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
-    const self = this;
-    const contract = require('truffle-contract')
-    const carriedInterest = contract(CarriedInterestContract);
-    const standardToken = contract(StandardTokenContract);
-    carriedInterest.setProvider(this.state.web3.currentProvider);
-    standardToken.setProvider(this.state.web3.currentProvider);
-
-    // simpleStorage.setProvider(this.state.web3.currentProvider);
-
-
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var carriedInterestInstance
-    var standardTokenInstance
-
-    // var simpleStorageInstance
-
-
-    // Get accounts.
-    this.state.web3.eth.getAccounts((error, accounts) => {
+    web3RPC.eth.getAccounts(function(error, accounts) {
       console.log(accounts);
-      carriedInterest.deployed().then((instance) => {
-        console.log(instance);
-        carriedInterestInstance = instance
-        //.call doesnt require gas
-        // return carriedInterestInstance.test.call({from: accounts[0]})
-        // return carriedInterestInstance.test({from: accounts[0]})
-        return carriedInterestInstance.releasedTokens.call(100, {from: accounts[0]})
-        // console.log(tokenAmount);
-        // return tokenAmount;
-      }).then((result) => {
+      self.setState({ accounts });
 
+
+
+      carriedInterest.deployed()
+      .then((instance) => {
+        console.log(instance);
+        self.carriedInterestInstance = instance;
+        return self.carriedInterestInstance.releasedTokens.call(100, {from: accounts[0]})
+      }).then((result) => {
         console.log(result);
-        this.setState({releasedTokens: result});
-        console.log(self.state.releasedTokens);
       })
 
       standardToken.deployed().then((instance) => {
       })
-
-      // simpleStorage.deployed().then((instance) => {
-      //   console.log("simpleStorage" + instance);
-      //   simpleStorageInstance = instance
-      //
-      //   // Stores a given value, 5 by default.
-      //   return simpleStorageInstance.set(5, {from: accounts[0]})
-      // }).then((result) => {
-      //   // Get the value from the contract to prove it worked.
-      //   return simpleStorageInstance.get.call(accounts[0])
-      // }).then((result) => {
-      //   // Update state with the result.
-      //   return this.setState({ storageValue: result.c[0] })
-      // })
     })
   }
-
 
   handleChange(event){
     this.setState({[event.target.id]: event.target.value});
@@ -178,10 +111,10 @@ class tokenSale extends Component {
     console.log("Props: ");
     console.log(this.props.userAddress);
 
-    if(this.state.web3.isAddress(this.props.userAddress.balanceAddress)){
+    if(web3RPC.isAddress(this.props.userAddress.balanceAddress)){
       let test = this.props.userAddress.balanceAddress
-      let balance = this.state.web3.eth.getBalance(test);
-      balance = this.state.web3.fromWei(balance, 'ether');
+      let balance = web3RPC.eth.getBalance(test);
+      balance = web3RPC.fromWei(balance, 'ether');
       console.log("Balance: " + balance);
       this.setState({ accountBalance: balance.toString(10) });//setting the state of the Account Balance without the use of redux
     }else{
@@ -189,6 +122,7 @@ class tokenSale extends Component {
     }
   }
   claimTokens(){
+    const self = this;
     console.log("STATE: ");
     //console.log(this.state.receivingAddress);
     console.log(this.state.price);
@@ -197,6 +131,13 @@ class tokenSale extends Component {
     this.props.sendTokens(this.state.price, this.state.receivingAddress)
     console.log("PROPS: ");
     console.log(this.props.receiveTokens);
+    let price = parseInt(this.props.receiveTokens.price)
+    console.log(price);
+    self.carriedInterestInstance.releasedTokens.call(price, {from: self.state.accounts[0]})
+    .then((tokenVolume) => {
+      console.log(tokenVolume.c[0]);
+      this.setState({ tokenVolume: tokenVolume.c[0]});
+    })
   }
   render(){
     let { receiveTokens: {price} } = this.props
@@ -233,7 +174,7 @@ class tokenSale extends Component {
         <br/>
         User Address: {receivingAddress}
         <br/>
-        Tokens Released:
+        Tokens Released: {this.state.tokenVolume}
         <hr/>
         <div>
           <h3>Token Balance Check</h3>

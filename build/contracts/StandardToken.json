@@ -346,8 +346,54 @@
       "links": {},
       "address": "0x6ea55e7945992b8837595fb2182f668c79078d25",
       "updated_at": 1498075301912
+    },
+    "1498145518646": {
+      "events": {
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "name": "Transfer",
+          "type": "event"
+        },
+        "0xcc16f5dbb4873280815c1ee09dbd06736cffcc184412cf7a71a0fdb75d397ca5": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "name": "Burn",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x7759a697448783f8280e29010f620d98fec16a8d",
+      "updated_at": 1498155754470
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1498075301912
+  "updated_at": 1498155754470
 }
