@@ -5,7 +5,7 @@ A decentralized application (ĐApp) to claim Carried Interest in tokens
 
 `cd CarbonX-Token-Sale`
 
-### install dependencies
+### Install Dependencies
 `npm install`
 ## Usage
 `npm run start`
