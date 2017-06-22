@@ -5,14 +5,13 @@ A decentralized application (ĐApp) to claim Carried Interest in tokens
 
 `cd CarbonX-Token-Sale`
 
-install dependencies
-
+### install dependencies
 `npm install`
 ## Usage
 `npm run start`
 
-to run the program on your default browser on `localhost:3000`
+will run the program on your default browser in `localhost:3000`
 ## Hosted
-Demo can be found at
+Demo can be found here
 
 [CarbonX Demo](http://carbonx-tokens.surge.sh/)
