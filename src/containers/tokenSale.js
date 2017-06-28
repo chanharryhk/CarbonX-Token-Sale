@@ -190,7 +190,7 @@ class tokenSale extends Component {
               <td><h4>Total Locked Tokens: {this.state.totalLockedTokens} <b>CBX</b></h4></td>
               <td><h4>Total Tokens Issued: {this.state.totalTokensIssued} <b>CBX</b></h4></td>
               <td><h4>Initial Price: {this.state.initialPrice}<b> Eth</b></h4></td>
-              <td><h4>Eth	Current Price: {this.state.currentPrice} <b>Eth</b></h4></td>
+              <td><h4>Current Price: {this.state.currentPrice} <b>Eth</b></h4></td>
               <td><h4>Carried Interest Rate: {this.state.interestRate} <b>%</b></h4></td>
             </tr>
           </tbody>
