@@ -24,10 +24,10 @@ class App extends Component {
         <nav className="navbar pure-menu pure-menu-horizontal">
           <a href="#" className="pure-menu-heading pure-menu-link">CarbonX</a>
         </nav>
+
         <VideoBackground/>
         <TokenInformation/>
         */}
-
         <TokenSale/>
         {/*
         <main className="container">

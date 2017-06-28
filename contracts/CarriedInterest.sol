@@ -20,13 +20,36 @@ contract CarriedInterest{
   uint constant VCContribution = 0;
 
   /*uint tokensAvailable = totalSupply * carriedInterest * (initialPrice - initialPrice) * (1 - VCContribution) / initialPrice;*/
+  address public owner;
+  mapping(address => uint256) balances; //hashtable how does getting the address get the balance as well???
 
-  function test() returns(uint _number) {
-    _number = 1234;
-    return _number;
+  function CarriedInterest() {
+    owner = msg.sender;
+    balances[owner] = 7000000;
   }
-  function releasedTokens(uint _currentPrice) returns(uint _saleTokens){
+
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    if (balances[msg.sender] >= _value && _value > 0) {
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    } else {
+      return false;
+    }
+  }
+
+  function balanceOf(address _owner) constant returns (uint256 _balance){
+    return balances[_owner];
+  }
+
+  function getTotalSupply() returns(uint _allTokens) {
+    _allTokens = totalSupply;
+  }
+
+  /*function releasedTokens(uint _currentPrice) returns(uint _saleTokens){
     _saleTokens = ((totalSupply / carriedInterest) * (_currentPrice - initialPrice) * (1 - VCContribution)) / _currentPrice;
     return _saleTokens;
-  }
+  }*/
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }

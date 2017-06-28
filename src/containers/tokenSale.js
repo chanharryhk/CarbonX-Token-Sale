@@ -8,6 +8,7 @@ import CarriedInterestContract from '../../build/contracts/CarriedInterest.json'
 import StandardTokenContract from '../../build/contracts/StandardToken.json';
 
 import Web3 from 'web3'
+//const provider = new Web3.providers.HttpProvider('https://ropsten.infura.io')
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const contract = require('truffle-contract')
 const carriedInterest = contract(CarriedInterestContract);
@@ -26,7 +27,7 @@ const backgroundStyle = {
   position: "relative",
   backgroundColor: "#004033",
   width: '100%',
-  height: '800px',
+  height: '1000px',
   padding: "100px",
   color: "#ffffff",
   fontFamily: "Helvetica Neue, Arial ,sansSerif",
@@ -70,6 +71,12 @@ class tokenSale extends Component {
     self.state = {
       value:'',
       web3: null,
+      totalTokens: 7000000,
+      interestRate: 5,
+      totalTokensIssued: 0,
+      initialPrice: 1,
+      currentPrice: 0,
+      VCContribution: 0,
     };
     self.handleChange = self.handleChange.bind(self);//Why?
     self.carriedInterest = null;
@@ -77,13 +84,9 @@ class tokenSale extends Component {
   }
   componentWillMount(){
     const self = this;
-
     web3RPC.eth.getAccounts(function(error, accounts) {
       console.log(accounts);
       self.setState({ accounts });
-
-
-
       carriedInterest.deployed()
       .then((instance) => {
         console.log(instance);
@@ -97,47 +100,75 @@ class tokenSale extends Component {
       })
     })
   }
+  componentDidMount(){
+    let totalLockedTokens = (this.state.totalTokens/(100/this.state.interestRate))
+    this.setState({totalLockedTokens: totalLockedTokens})
+  }
 
   handleChange(event){
     this.setState({[event.target.id]: event.target.value});
     console.log(event.target.id);
     console.log(event.target.value);
   }
-  updateValue(){
+  checkBalance(){
+    const self = this;
     //const { dispatch } = this.props
     //console.log(dispatch);
     // store.dispatch({ type: "TOGGLE_CHECK", value: this.state.ownerAddress })
     this.props.checkAddress(this.state.ownerAddress)
-    console.log("Props: ");
-    console.log(this.props.userAddress);
 
-    if(web3RPC.isAddress(this.props.userAddress.balanceAddress)){
-      let test = this.props.userAddress.balanceAddress
-      let balance = web3RPC.eth.getBalance(test);
-      balance = web3RPC.fromWei(balance, 'ether');
-      console.log("Balance: " + balance);
-      this.setState({ accountBalance: balance.toString(10) });//setting the state of the Account Balance without the use of redux
-    }else{
-      console.log(self.balanceInstance);
-    }
+    console.log("Props: ");
+    console.log(this.props.userAddress.balanceAddress);
+
+    self.carriedInterestInstance.balanceOf.call(this.props.userAddress.balanceAddress, {from: this.props.userAddress.balanceAddress})
+    .then((Balance) => {
+      console.log(Balance);
+      this.setState({accountBalance: Balance.c[0]});
+    })
+
+
+    // if(web3RPC.isAddress(this.props.userAddress.balanceAddress)){
+    //   let test = this.props.userAddress.balanceAddress
+    //   let balance = web3RPC.eth.getBalance(test);
+    //   balance = web3RPC.fromWei(balance, 'ether');
+    //   console.log("Balance: " + balance);
+    //   this.setState({ accountBalance: balance.toString(10) });//setting the state of the Account Balance without the use of redux
+    // }else{
+    //   console.log(self.balanceInstance);
+    // }
   }
   claimTokens(){
     const self = this;
     console.log("STATE: ");
     //console.log(this.state.receivingAddress);
-    console.log(this.state.price);
-    console.log(this.state.receivingAddress);
+    console.log("Price", this.state.price);
+    console.log("Address",this.state.receivingAddress);
 
-    this.props.sendTokens(this.state.price, this.state.receivingAddress)
-    console.log("PROPS: ");
-    console.log(this.props.receiveTokens);
-    let price = parseInt(this.props.receiveTokens.price)
-    console.log(price);
-    self.carriedInterestInstance.releasedTokens.call(price, {from: self.state.accounts[0]})
-    .then((tokenVolume) => {
-      console.log(tokenVolume.c[0]);
-      this.setState({ tokenVolume: tokenVolume.c[0]});
+    var VCContribution = 0;
+    var initialPrice = 1;
+
+    let tokensReleased = ((this.state.totalLockedTokens * (this.state.price - this.state.initialPrice) * (1 - this.state.VCContribution)) / this.state.price).toFixed(2);
+
+    const from = self.state.accounts[0];
+
+    self.carriedInterestInstance.transfer(this.state.receivingAddress, tokensReleased, {from})
+    .then((instance)=>{
+      console.log(instance);
     })
+    this.setState({tokensReleased: tokensReleased});
+    this.state.currentPrice = this.state.price;
+
+    this.state.totalTokensIssued += parseFloat(tokensReleased);
+    this.props.sendTokens(this.state.price, this.state.receivingAddress)
+    // console.log("PROPS: ");
+    // console.log(this.props.receiveTokens);
+    // let price = parseInt(this.props.receiveTokens.price)
+    // console.log(price);
+    // self.carriedInterestInstance.releasedTokens.call(price, {from: self.state.accounts[0]})
+    // .then((tokenVolume) => {
+    //   console.log(tokenVolume.c[0]);
+    //   this.setState({ tokenVolume: tokenVolume.c[0]});
+    // })
   }
   render(){
     let { receiveTokens: {price} } = this.props
@@ -150,13 +181,17 @@ class tokenSale extends Component {
     // console.log("User Input Address", address)
     return(
       <div style={backgroundStyle}>
+        <h1>Carried Interest</h1>
+        <hr/>
         <table style={tableTitleStyle}>
           <tbody>
             <tr>
-              <th  style={tableContentStyle}> Locked Tokens</th>
-            </tr>
-            <tr>
-              <td>10000 <b>CBX</b></td>
+              <td><h4>Total Tokens: {this.state.totalTokens} <b>CBX</b></h4></td>
+              <td><h4>Total Locked Tokens: {this.state.totalLockedTokens} <b>CBX</b></h4></td>
+              <td><h4>Total Tokens Issued: {this.state.totalTokensIssued} <b>CBX</b></h4></td>
+              <td><h4>Initial Price: {this.state.initialPrice}<b> Eth</b></h4></td>
+              <td><h4>Eth	Current Price: {this.state.currentPrice} <b>Eth</b></h4></td>
+              <td><h4>Carried Interest Rate: {this.state.interestRate} <b>%</b></h4></td>
             </tr>
           </tbody>
         </table>
@@ -174,13 +209,13 @@ class tokenSale extends Component {
         <br/>
         User Address: {receivingAddress}
         <br/>
-        Tokens Released: {this.state.tokenVolume}
+        Tokens Released: {this.state.tokensReleased}
         <hr/>
         <div>
           <h3>Token Balance Check</h3>
           <input style={inputStyle} type="text" id="ownerAddress" onChange={this.handleChange} placeholder="0x Your Address"/>
           <br/><br/>
-          <button onClick={this.updateValue.bind(this)} style={buttonStyle} value="submit">Check!</button>
+          <button onClick={this.checkBalance.bind(this)} style={buttonStyle} value="submit">Check!</button>
         </div>
         <br/>
         User Address: {balanceAddress}
