@@ -8,13 +8,14 @@ import CarriedInterestContract from '../../build/contracts/CarriedInterest.json'
 import StandardTokenContract from '../../build/contracts/StandardToken.json';
 
 import Web3 from 'web3'
-//const provider = new Web3.providers.HttpProvider('https://ropsten.infura.io')
-const provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const provider = new Web3.providers.HttpProvider('https://rinkeby.infura.io/8PN5WjIQeobwk2IYDdVp')
+//const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const contract = require('truffle-contract')
 const carriedInterest = contract(CarriedInterestContract);
 const standardToken = contract(StandardTokenContract);
 carriedInterest.setProvider(provider);
 standardToken.setProvider(provider);
+
 //import Web3 from 'web3';
 
 // Get Web3 so we can get our accounts.
@@ -81,17 +82,19 @@ class tokenSale extends Component {
     self.handleChange = self.handleChange.bind(self);//Why?
     self.carriedInterest = null;
     self.standardTokenInstance = null;
+    console.log("window", window.web3.eth.accounts[0]);
+    self.metamaskAccount0 = window.web3.eth.accounts[0];
   }
   componentWillMount(){
     const self = this;
     web3RPC.eth.getAccounts(function(error, accounts) {
-      console.log(accounts);
+      console.log("HERE", accounts);
       self.setState({ accounts });
       carriedInterest.deployed()
       .then((instance) => {
         console.log(instance);
         self.carriedInterestInstance = instance;
-        return self.carriedInterestInstance.releasedTokens.call(100, {from: accounts[0]})
+        //return self.carriedInterestInstance.releasedTokens.call(100, {from: accounts[0]})
       }).then((result) => {
         console.log(result);
       })
@@ -149,12 +152,11 @@ class tokenSale extends Component {
 
     let tokensReleased = ((this.state.totalLockedTokens * (this.state.price - this.state.initialPrice) * (1 - this.state.VCContribution)) / this.state.price).toFixed(2);
 
-    const from = self.state.accounts[0];
-
-    self.carriedInterestInstance.transfer(this.state.receivingAddress, tokensReleased, {from})
+    self.carriedInterestInstance.transfer(this.state.receivingAddress, tokensReleased, {from: self.metamaskAccount0})
     .then((instance)=>{
       console.log(instance);
     })
+    .catch(console.log)
     this.setState({tokensReleased: tokensReleased});
     this.state.currentPrice = this.state.price;
 

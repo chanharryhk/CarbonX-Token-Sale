@@ -1,3 +1,5 @@
+const stringify = require('json-stable-stringify')
+
 module.exports = {
   cacheIdentifierForPayload: cacheIdentifierForPayload,
   canCache: canCache,
@@ -7,13 +9,11 @@ module.exports = {
   cacheTypeForPayload: cacheTypeForPayload,
 }
 
-function cacheIdentifierForPayload(payload){
-  var simpleParams = paramsWithoutBlockTag(payload)
-  if (canCache(payload)) {
-    return payload.method+':'+JSON.stringify(simpleParams)
-  } else {
-    return null
-  }
+function cacheIdentifierForPayload(payload, opts = {}){
+  if (!canCache(payload)) return null
+  const { includeBlockRef } = opts
+  const params = includeBlockRef ? payload.params : paramsWithoutBlockTag(payload)
+  return payload.method + ':' + stringify(params)
 }
 
 function canCache(payload){
@@ -100,6 +100,7 @@ function cacheTypeForPayload(payload) {
     case 'eth_estimateGas':
     case 'eth_getFilterLogs':
     case 'eth_getLogs':
+    case 'net_peerCount':
       return 'block'
 
     // never cache
